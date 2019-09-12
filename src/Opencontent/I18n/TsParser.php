@@ -235,7 +235,7 @@ class TsParser
                 if ($translation == ''){
                     $translationNode->setAttribute('type', 'unfinished');
                 }else{
-                    $translationNode->nodeValue = $translation;
+                    $translationNode->nodeValue = trim($translation);
                 }
                 $messageNode->appendChild($translationNode);
 
