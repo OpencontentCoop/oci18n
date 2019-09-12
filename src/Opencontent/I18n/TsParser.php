@@ -221,14 +221,14 @@ class TsParser
             $contextNode = $dom->createElement('context');
 
             $nameNode = $dom->createElement('name');
-            $nameNode->nodeValue = $context;
+            $nameNode->nodeValue = trim($context);
             $contextNode->appendChild($nameNode);
 
             foreach ($values as $source => $translation){
                 $messageNode = $dom->createElement('message');
 
                 $sourceNode = $dom->createElement('source');
-                $sourceNode->nodeValue = $source;
+                $sourceNode->nodeValue = trim($source);
                 $messageNode->appendChild($sourceNode);
 
                 $translationNode = $dom->createElement('translation');
