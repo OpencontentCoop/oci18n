@@ -59,8 +59,8 @@ try {
         unset($translationsList['untranslated']);
 
         $filename = $extensionName . '.csv';
-        $filepath = './openpa_tools/translations_tools/' . $filename;
-        eZFile::create($filename, dirname($filepath), null);
+        $filepath = $filename;
+        eZFile::create($filename, false, null);
         $output = fopen($filepath, 'a');
 
         foreach ($sourceList as $sourceIdentifier) {
@@ -78,7 +78,7 @@ try {
             );
         }
 
-        $cli->warning($filepath);
+        $cli->warning(realpath($filepath));
     }
 
 } catch (Exception $e) {

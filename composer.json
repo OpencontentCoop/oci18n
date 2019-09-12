@@ -12,7 +12,13 @@
     "autoload": {
         "psr-0": {"Opencontent\\I18n\\": "src/"}
     },
+    "require": {
+        "asimlqt/php-google-spreadsheet-client": "3.*"
+    },
     "config": {
         "bin-dir": "bin"
-    }
+    },
+    "bin": [
+        "bin/oci18n"
+    ]
 }

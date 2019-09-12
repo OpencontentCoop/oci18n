@@ -2,6 +2,11 @@
 
 namespace Opencontent\I18n;
 
+use SimpleXMLElement;
+use DOMDocument;
+use DOMElement;
+use DOMImplementation;
+
 class TsParser
 {
     private $sourcePath;
@@ -196,6 +201,55 @@ class TsParser
     public function getCurrentLanguage()
     {
         return $this->currentLanguage;
+    }
+    
+    public static function storeTsFile($extensionName, $language, $data)
+    {
+        $filepath = "extension/$extensionName/translations/$language/translation.ts";
+
+        \eZDir::mkdir(dirname($filepath), false, true);
+
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $implementation = new DOMImplementation();
+        $dtd = $implementation->createDocumentType('TS', '', '');
+        $dom = $implementation->createDocument('', '', $dtd);
+        $dom->encoding = 'utf-8';
+
+        $tsNode = $dom->createElement('TS');
+        $tsNode->setAttribute('version', '2.0');
+        foreach ($data as $context => $values){
+            $contextNode = $dom->createElement('context');
+
+            $nameNode = $dom->createElement('name');
+            $nameNode->nodeValue = $context;
+            $contextNode->appendChild($nameNode);
+
+            foreach ($values as $source => $translation){
+                $messageNode = $dom->createElement('message');
+
+                $sourceNode = $dom->createElement('source');
+                $sourceNode->nodeValue = $source;
+                $messageNode->appendChild($sourceNode);
+
+                $translationNode = $dom->createElement('translation');
+                if ($translation == ''){
+                    $translationNode->setAttribute('type', 'unfinished');
+                }else{
+                    $translationNode->nodeValue = $translation;
+                }
+                $messageNode->appendChild($translationNode);
+
+                $contextNode->appendChild($messageNode);
+            }
+            $tsNode->appendChild($contextNode);
+        }
+        $dom->appendChild($tsNode);
+
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+        $dom->save($filepath);
+        
+        return $filepath;
     }
 
 }
