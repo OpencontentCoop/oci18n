@@ -32,6 +32,7 @@ try {
 
 } catch (Exception $e) {
     $cli->error($e->getMessage());
+    $cli->output($e->getTraceAsString());
 }
 
 $script->shutdown();

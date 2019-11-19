@@ -75,7 +75,11 @@ class TsParser
         }
         $data = [];
         foreach ($this->data as $item) {
-            $data[$item[2]] = '[' . $item[0] . '] ' . $item[1];
+            $translation = $item[2];
+            if (empty($translation)){
+                $translation = trim($item[1]);
+            }
+            $data[$translation] = '[' . $item[0] . '] ' . $item[1];
         }
 
         return $data;
@@ -88,7 +92,7 @@ class TsParser
         }
 
         $filename = str_replace('/', '-', $this->sourcePath) . '.csv';
-        eZFile::create($filename, false, null);
+        \eZFile::create($filename, false, null);
 
         if (count($this->data) > 1) {
             $output = fopen($filename, 'a');
