@@ -66,13 +66,33 @@ try {
     $worksheet = $worksheetFeed->getByTitle($extensionName);
     $csvData = $worksheet->getCsv();
 
-    $csv = array_map('str_getcsv', explode("\n", $csvData));
-    array_walk($csv, function(&$a) use ($csv) {
-        $a = array_combine($csv[0], $a);
-    });
-    $headers = array_shift($csv); # remove column header
+    $tempFile = "temp_{$extensionName}_translations.csv";
+    eZFile::create($tempFile, false, $csvData);
 
-    unset($headers['context']);
+    $csvFile = @fopen($tempFile, 'r');
+    $i = 0;
+    $headers = [];
+    $csv = [];
+    while ($data = fgetcsv($csvFile, 100000)) {
+        if ($i == 0) // First line, handle headers
+        {
+            $headers = $data;
+            $i++;
+            unset($data);
+            continue;
+        }
+
+        $rowData = array();
+        for ($j = 0, $jMax = count($headers); $j < $jMax; ++$j) {
+            $rowData[$headers[$j]] = $data[$j];
+        }
+
+        unset($data);
+        $csv[] = $rowData;
+        unset($rowData);
+        $i++;
+    }
+    unlink($tempFile);
 
     $data = [];
     foreach ($csv as $item){
