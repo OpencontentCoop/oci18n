@@ -67,35 +67,7 @@ $choice = ezcConsoleDialogViewer::displayDialog($menu);
 
 $sheetName = $sheets[$choice];
 $worksheet = $worksheetFeed->getByTitle($sheetName);
-$csvData = $worksheet->getCsv();
-
-$tempFile = "temp_{$sheetName}_translations.csv";
-eZFile::create($tempFile, false, $csvData);
-
-$csvFile = @fopen($tempFile, 'r');
-$i = 0;
-$headers = [];
-$csv = [];
-while ($data = fgetcsv($csvFile, 100000)) {
-    if ($i == 0) // First line, handle headers
-    {
-        $headers = $data;
-        $i++;
-        unset($data);
-        continue;
-    }
-
-    $rowData = array();
-    for ($j = 0, $jMax = count($headers); $j < $jMax; ++$j) {
-        $rowData[$headers[$j]] = $data[$j];
-    }
-
-    unset($data);
-    $csv[] = $rowData;
-    unset($rowData);
-    $i++;
-}
-unlink($tempFile);
+$csv = \Opencontent\I18n\GoogleSheetCsvParser::parse($worksheet);
 
 switch ($sheetName){
     case 'OpenCity-Trasparenza':
@@ -125,7 +97,7 @@ foreach ($csv as $row) {
         $data = $row;
         unset($data['context']);
         foreach ($row as $key => $value){
-            if (empty($value)){
+            if (empty($value) || !in_array($key, $languages)){
                 unset($data[$key]);
             }
         }
@@ -140,7 +112,7 @@ foreach ($csv as $row) {
         $data = $row;
         unset($data['context']);
         foreach ($row as $key => $value){
-            if (empty($value)){
+            if (empty($value) || !in_array($key, $languages)){
                 unset($data[$key]);
             }
         }
