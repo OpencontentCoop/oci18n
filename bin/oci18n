@@ -3,9 +3,6 @@
 require 'autoload.php';
 
 use Opencontent\I18n\TsParser;
-use Google\Spreadsheet\DefaultServiceRequest;
-use Google\Spreadsheet\ServiceRequestFactory;
-use Google\Spreadsheet\SpreadsheetService;
 
 $script = eZScript::instance(['description' => "Sync ts file with google spreadhsheet",
     'use-session' => false,
@@ -41,17 +38,9 @@ try {
         str_replace('https://docs.google.com/spreadsheets/d/', '', $googleSpreadsheetUrl));
     $googleSpreadsheetId = array_shift($googleSpreadsheetTemp);
 
-    $serviceRequest = new DefaultServiceRequest("");
-    ServiceRequestFactory::setInstance($serviceRequest);
-    $spreadsheetService = new SpreadsheetService();
-
-    $worksheetFeed = $spreadsheetService->getPublicSpreadsheet($googleSpreadsheetId);
-    $feedTitle = (string)$worksheetFeed->getXml()->title;
-    $entries = $worksheetFeed->getEntries();
-    $sheets = array();
-    foreach ($entries as $entry) {
-        $sheets[] = $entry->getTitle();
-    }
+    $sheet = new \Opencontent\Google\GoogleSheet($googleSpreadsheetId);
+    $feedTitle = (string)$sheet->getTitle();
+    $sheets = $sheet->getSheetTitleList();
 
     $menu = new ezcConsoleMenuDialog($output);
     $menu->options = new ezcConsoleMenuDialogOptions();
@@ -63,36 +52,7 @@ try {
     if (!is_dir("./extension/$extensionName")){
         throw new Exception("Extension $extensionName not installed");
     }
-    $worksheet = $worksheetFeed->getByTitle($extensionName);
-    $csvData = $worksheet->getCsv();
-
-    $tempFile = "temp_{$extensionName}_translations.csv";
-    eZFile::create($tempFile, false, $csvData);
-
-    $csvFile = @fopen($tempFile, 'r');
-    $i = 0;
-    $headers = [];
-    $csv = [];
-    while ($data = fgetcsv($csvFile, 100000)) {
-        if ($i == 0) // First line, handle headers
-        {
-            $headers = $data;
-            $i++;
-            unset($data);
-            continue;
-        }
-
-        $rowData = array();
-        for ($j = 0, $jMax = count($headers); $j < $jMax; ++$j) {
-            $rowData[$headers[$j]] = $data[$j];
-        }
-
-        unset($data);
-        $csv[] = $rowData;
-        unset($rowData);
-        $i++;
-    }
-    unlink($tempFile);
+    $csv = $sheet->getSheetDataHash($extensionName);
 
     $data = [];
     foreach ($csv as $item){

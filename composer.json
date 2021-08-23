@@ -13,7 +13,7 @@
         "psr-0": {"Opencontent\\I18n\\": "src/"}
     },
     "require": {
-        "asimlqt/php-google-spreadsheet-client": "3.*"
+        "opencontent/googlesheet": "*"
     },
     "config": {
         "bin-dir": "bin"

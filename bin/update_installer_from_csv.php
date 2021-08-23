@@ -2,9 +2,6 @@
 require 'autoload.php';
 
 use Symfony\Component\Yaml\Yaml;
-use Google\Spreadsheet\DefaultServiceRequest;
-use Google\Spreadsheet\ServiceRequestFactory;
-use Google\Spreadsheet\SpreadsheetService;
 
 $script = eZScript::instance(['description' => "Create db translations csv from installer directory",
     'use-session' => false,
@@ -47,17 +44,8 @@ $googleSpreadsheetTemp = explode('/',
     str_replace('https://docs.google.com/spreadsheets/d/', '', $googleSpreadsheetUrl));
 $googleSpreadsheetId = array_shift($googleSpreadsheetTemp);
 
-$serviceRequest = new DefaultServiceRequest("");
-ServiceRequestFactory::setInstance($serviceRequest);
-$spreadsheetService = new SpreadsheetService();
-
-$worksheetFeed = $spreadsheetService->getPublicSpreadsheet($googleSpreadsheetId);
-$feedTitle = (string)$worksheetFeed->getXml()->title;
-$entries = $worksheetFeed->getEntries();
-$sheets = array();
-foreach ($entries as $entry) {
-    $sheets[] = $entry->getTitle();
-}
+$sheet = new \Opencontent\Google\GoogleSheet($googleSpreadsheetId);
+$sheets = $sheet->getSheetTitleList();
 
 $menu = new ezcConsoleMenuDialog($output);
 $menu->options = new ezcConsoleMenuDialogOptions();
@@ -66,8 +54,7 @@ $menu->options->validator = new ezcConsoleMenuDialogDefaultValidator($sheets);
 $choice = ezcConsoleDialogViewer::displayDialog($menu);
 
 $sheetName = $sheets[$choice];
-$worksheet = $worksheetFeed->getByTitle($sheetName);
-$csv = \Opencontent\I18n\GoogleSheetCsvParser::parse($worksheet);
+$csv = $sheet->getSheetDataHash($sheetName);
 
 switch ($sheetName){
     case 'OpenCity-Trasparenza':
