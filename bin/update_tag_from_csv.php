@@ -63,8 +63,7 @@ $menu->options->validator = new ezcConsoleMenuDialogDefaultValidator($sheets);
 $choice = ezcConsoleDialogViewer::displayDialog($menu);
 
 $sheetName = $sheets[$choice];
-$csv = $sheet->getSheetDataArray($sheetName);
-
+$csv = $sheet->getSheetDataHash($sheetName);
 $tagRepository = new TagRepository();
 
 foreach ($csv as $item) {

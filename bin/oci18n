@@ -52,7 +52,7 @@ try {
     if (!is_dir("./extension/$extensionName")){
         throw new Exception("Extension $extensionName not installed");
     }
-    $csv = $sheet->getSheetDataArray($extensionName);
+    $csv = $sheet->getSheetDataHash($extensionName);
 
     $data = [];
     foreach ($csv as $item){
