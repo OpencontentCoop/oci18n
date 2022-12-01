@@ -24,7 +24,7 @@ class TsParser
         $this->sourcePath = $sourcePath;
         $this->xml = new SimpleXMLElement(file_get_contents($this->sourcePath));
         if (!$this->xml) {
-            throw new Exception("Source not found or invalid");
+            throw new \Exception("Source not found or invalid");
         }
 
         $this->currentLanguage = 'translation';
