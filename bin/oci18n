@@ -2,76 +2,38 @@
 <?php
 require 'autoload.php';
 
-use Opencontent\I18n\TsParser;
+use Opencontent\I18n\CliTools;
 
-$script = eZScript::instance(['description' => "Sync ts file with google spreadhsheet",
+$script = eZScript::instance(['description' => "Sync ts file with source google spreadhsheet",
     'use-session' => false,
     'use-modules' => false,
     'debug-timing' => true
 ]);
 
 $script->startup();
-$options = $script->getOptions();
+$options = $script->getOptions(
+    '[source:]',
+    '',
+    [
+        'source' => 'sheet or poeditor (default)',
+    ]
+);
 $script->initialize();
 $cli = eZCLI::instance();
 $output = new ezcConsoleOutput();
 
+$source = $options['source'] ?? 'poeditor';
+
 try {
 
-    $googleSpreadsheetUrl = 'https://docs.google.com/spreadsheets/d/1Sr21vupXSjru__6NfteiFbM6kmarNhyETzYgjSp_ngc';
-
-    $question = ezcConsoleQuestionDialog::YesNoQuestion(
-        $output,
-        "Utilizzo il Google Spreadsheet predefinito: $googleSpreadsheetUrl",
-        "y"
-    );
-
-    if (ezcConsoleDialogViewer::displayDialog($question) == "n") {
-        $opts = new ezcConsoleQuestionDialogOptions();
-        $opts->text = "Inserisci l'url del Google Spreadsheet";
-        $opts->showResults = true;
-        $question = new ezcConsoleQuestionDialog($output, $opts);
-        $googleSpreadsheetUrl = ezcConsoleDialogViewer::displayDialog($question);
+    if ($source === 'sheet'){
+        CliTools::runWithSpreadsheet();
     }
 
-    $googleSpreadsheetTemp = explode('/',
-        str_replace('https://docs.google.com/spreadsheets/d/', '', $googleSpreadsheetUrl));
-    $googleSpreadsheetId = array_shift($googleSpreadsheetTemp);
-
-    $sheet = new \Opencontent\Google\GoogleSheet($googleSpreadsheetId);
-    $feedTitle = (string)$sheet->getTitle();
-    $sheets = $sheet->getSheetTitleList();
-
-    $menu = new ezcConsoleMenuDialog($output);
-    $menu->options = new ezcConsoleMenuDialogOptions();
-    $menu->options->text = "Please choose a possibility:\n";
-    $menu->options->validator = new ezcConsoleMenuDialogDefaultValidator($sheets);
-    $choice = ezcConsoleDialogViewer::displayDialog($menu);
-
-    $extensionName = $sheets[$choice];
-    if (!is_dir("./extension/$extensionName")){
-        throw new Exception("Extension $extensionName not installed");
-    }
-    $csv = $sheet->getSheetDataHash($extensionName);
-
-    $data = [];
-    foreach ($csv as $item){
-        $context = $item['context'];
-        unset($item['context']);
-        $source = $item['source'];
-        unset($item['source']);
-        $data['untranslated'][$context][$source] = '';
-        foreach ($item as $key => $value){
-            $data[$key][$context][$source] = $value;
-        }
+    if ($source === 'poeditor'){
+        CliTools::runWithPoEditor();
     }
 
-    foreach ($data as $language => $values){
-        $success = TsParser::storeTsFile($extensionName, $language, $values);
-        if ($success){
-            $cli->warning("Store file $success");
-        }
-    }
 
 
 } catch (Exception $e) {
