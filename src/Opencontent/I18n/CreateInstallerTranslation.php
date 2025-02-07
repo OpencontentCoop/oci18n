@@ -23,8 +23,11 @@ class CreateInstallerTranslation
         $data = Yaml::parse(file_get_contents($filepath));
 
         foreach ($this->languages as $language) {
-
+            $data['metadata']['languages'][] = $language;
+            $data['data'][$language] = $data['data']['ita-IT'];
         }
+        $dataYaml = Yaml::dump($data, 10);
+        file_put_contents($filepath, $dataYaml);
     }
 
     public function parseInstaller($installerDirectory)

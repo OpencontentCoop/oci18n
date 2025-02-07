@@ -92,6 +92,8 @@ class CliTools
             "Inserisci il token api PoEditor (lo trovi qui: https://poeditor.com/account/api)",
             getenv('POEDITOR_TOKEN')
         );
+        $client = (new PoEditorClient($token));
+
         $language = self::selectLanguage();
         $tag = self::selectExtension(true, true);
         $importContentTypes = self::yesNo("Vuoi aggiornare i content types?", 'n');
@@ -103,7 +105,6 @@ class CliTools
                 'vendor/opencity-labs/opencity-installer'
             ) : null;
 
-        $client = (new PoEditorClient($token));
         $languages = explode(",", $language);
 
         if ($tag === 'Tutte'){
@@ -111,6 +112,13 @@ class CliTools
         }else{
             $extensions = [$tag];
         }
+
+//        $languages = ['en'];
+//        $extensions = [];
+//        $importContentTypes = false;
+//        $importTags = false;
+//        $importContents = true;
+//        $installer = 'vendor/opencity-labs/opencity-installer';
 
         foreach ($extensions as $extension) {
             if (is_dir("extension/$extension")) {
@@ -272,7 +280,7 @@ class CliTools
                             foreach ($exportFields as $field) {
                                 $key = sprintf('%s-%s', $contentFileList[$name]['identifier'], $field);
                                 if (!empty($values[$key])) {
-                                    #$cli->output('  ' . $key . ' -> ' . $values[$key]);
+//                                    $cli->output('  ' . $key . ' -> ' . $values[$key]);
                                     if (strpos($field, '.') !== false) {
                                         $dot = new Dot($contentData['data'][$locale]);
                                         $dot->set($field, $values[$key]);
@@ -439,13 +447,24 @@ class CliTools
         }
         $hashCollection = [];
         foreach ($collection as $item) {
-            $contentData = Yaml::parse(file_get_contents($item['path']));
+            $fileContents = file_get_contents($item['path']);
+            $contentData = Yaml::parse($fileContents);
             $dir = $item['dir'];
             if ($dir) {
                 $dir = $dir . ':';
             }
             $classIdentifier = $contentData['metadata']['classIdentifier'];
             $name = $classIdentifier . '.' . $dir . basename($item['path']);
+            if (isset($hashCollection[$name])){
+                $useAlreadyExists = (
+                    mb_strlen(json_encode($hashCollection[$name]['data'])) >
+                    mb_strlen(json_encode($contentData))
+                );
+                \eZCLI::instance()->warning("Duplicate $name in " . $item['path'] . ' ' . (int)$useAlreadyExists);
+                if ($useAlreadyExists) {
+                    continue;
+                }
+            }
             $hashCollection[$name] = $item;
             $hashCollection[$name]['identifier'] = $dir . basename($item['path']);
             $hashCollection[$name]['data'] = $contentData;

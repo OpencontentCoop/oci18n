@@ -24,6 +24,8 @@ class YmlExportableContents extends YmlExportableContentTypes
         'page.global.blocks.*.custom_attributes.intro_text',
         'question',
         'answer',
+        'legal_name',
+        'main_function',
 //        'titolo',
 //        'contenuto_obbligo',
 //        'riferimenti_normativi'

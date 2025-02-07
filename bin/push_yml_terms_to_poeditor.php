@@ -18,7 +18,7 @@ $script = eZScript::instance([
 
 $script->startup();
 $options = $script->getOptions(
-    '[token:][language:][installer_directory:]',
+    '[token:][language:][installer_directory:][dry-run]',
     '',
     [
         'token' => 'api token',
@@ -64,6 +64,10 @@ function syncTermsAndItalianTranslations($client, $installerDirectory, $projectN
     foreach ($terms as $term) {
         $poeData[trim($term['context'], '"')][] = $term['term'];
     }
+//    $test = 'organizzazione.csv:b15ce8508aef86765e81cd66f685758c:d7f88dce317bfc2f08c8a3917be8841x';
+//    print_r([1,$poeData[$test]]);
+//    print_r([2,$poeData['"' . $test . '"']]);
+//    die();
     $localData = Yaml::parseFile($installerDirectory . $path . '/it.yml');
     $addTermList = [];
     foreach ($localData as $context => $terms) {
@@ -73,7 +77,7 @@ function syncTermsAndItalianTranslations($client, $installerDirectory, $projectN
                     $cli->output(sprintf('[%s] %s', $context, $term));
                     $addTermList[] = [
                         'term' => $term,
-                        'context' => $context,
+                        'context' => '"' . $context . '"',
                     ];
                 }
             }
@@ -93,9 +97,11 @@ function syncTermsAndItalianTranslations($client, $installerDirectory, $projectN
         }
     }
     if (!empty($addTermList)) {
-        if (!$dryRun && CliTools::yesNo('Aggiorno poeditor con i nuovi vocaboli? ' . count($addTermList))) {
-            $response = $client->addTerms($project['id'], $addTermList);
-            print_r($response);
+        if (CliTools::yesNo('Aggiorno poeditor con i nuovi vocaboli? ' . count($addTermList))) {
+            if (!$dryRun) {
+                $response = $client->addTerms($project['id'], $addTermList);
+                print_r($response);
+            }
         }
     }
     $language = 'it';
@@ -147,26 +153,32 @@ function syncTermsAndItalianTranslations($client, $installerDirectory, $projectN
         }
     }
     if (!empty($addTranslationList)) {
-        if (!$dryRun && CliTools::yesNo('Aggiorno poeditor con le nuove traduzioni? ' . count($addTranslationList))) {
-            $response = $client->addTranslations($project['id'], $language, $addTranslationList);
-            print_r($response);
+        if (CliTools::yesNo('Aggiorno poeditor con le nuove traduzioni? ' . count($addTranslationList))) {
+            if (!$dryRun) {
+                $response = $client->addTranslations($project['id'], $language, $addTranslationList);
+                print_r($response);
+            }
         }
     }
     if (!empty($updateTranslationList)) {
-        if (!$dryRun && CliTools::yesNo('Aggiorno poeditor con le traduzioni modificate? ' . count($updateTranslationList))) {
-            $response = $client->updateTranslations($project['id'], $language, $updateTranslationList);
-            print_r($response);
+        if (CliTools::yesNo('Aggiorno poeditor con le traduzioni modificate? ' . count($updateTranslationList))) {
+            if (!$dryRun) {
+                $response = $client->updateTranslations($project['id'], $language, $updateTranslationList);
+                print_r($response);
+            }
         }
     }
     if (!empty($deleteTermsList) && !$skipDelete) {
-        if (!$dryRun && CliTools::yesNo('Rimuovo da poeditor i termini senza traduzioni in italiano? ' . count($deleteTermsList))) {
-            $response = $client->deleteTerms($project['id'], $deleteTermsList);
-            print_r($response);
+        if (CliTools::yesNo('Rimuovo da poeditor i termini senza traduzioni in italiano? ' . count($deleteTermsList))) {
+            if (!$dryRun) {
+                $response = $client->deleteTerms($project['id'], $deleteTermsList);
+                print_r($response);
+            }
         }
     }
 }
 
-$dryRun = false;
+$dryRun = $options['dry-run'];
 
 syncTermsAndItalianTranslations($client, $installerDirectory, 'Opencity Italia - CMS - content-types', '/_translations/content-types', $dryRun);
 $cli->output();
