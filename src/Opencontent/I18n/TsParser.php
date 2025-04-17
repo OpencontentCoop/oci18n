@@ -21,6 +21,9 @@ class TsParser
 
     public function __construct($sourcePath)
     {
+        if (strpos($sourcePath, '/eng-GB/') !== false) {
+            $sourcePath = str_replace('/eng-GB/', '/eng-GB@euro/', $sourcePath);
+        }
         $this->sourcePath = $sourcePath;
         $this->xml = new SimpleXMLElement(file_get_contents($this->sourcePath));
         if (!$this->xml) {
@@ -37,11 +40,13 @@ class TsParser
 
     public function parse()
     {
-        $this->data = [[
-            'context',
-            'source',
-            $this->currentLanguage
-        ]];
+        $this->data = [
+            [
+                'context',
+                'source',
+                $this->currentLanguage,
+            ],
+        ];
 
         foreach ($this->xml->context as $context) {
             $contextName = (string)$context->name;
@@ -76,7 +81,7 @@ class TsParser
         $data = [];
         foreach ($this->data as $item) {
             $translation = $item[2];
-            if (empty($translation)){
+            if (empty($translation)) {
                 $translation = trim($item[1]);
             }
             $data[$translation] = '[' . $item[0] . '] ' . $item[1];
@@ -112,10 +117,10 @@ class TsParser
     {
         $doc = new DOMDocument();
         $string = file_get_contents($this->sourcePath);
-        $string = preg_replace( array('/\s{2,}/', '/[\t\n]/'), ' ', $string );
-        $string = preg_replace("/>s+</", "><", $string );
-        $string = str_replace("> <", "><", $string );
-        $string = str_replace( array( '&amp;nbsp;', "\xC2\xA0" ), ' ', $string ); // from ezxhtmlxmloutput.php
+        $string = preg_replace(['/\s{2,}/', '/[\t\n]/'], ' ', $string);
+        $string = preg_replace("/>s+</", "><", $string);
+        $string = str_replace("> <", "><", $string);
+        $string = str_replace(['&amp;nbsp;', "\xC2\xA0"], ' ', $string); // from ezxhtmlxmloutput.php
         $doc->loadXML($string);
 
         /** @var DOMElement [] $contexts */
@@ -125,15 +130,15 @@ class TsParser
 
             /** @var DOMElement [] $messages */
             $messages = $context->getElementsByTagName('message');
-            foreach ($messages as $message){
+            foreach ($messages as $message) {
                 $source = $message->getElementsByTagName('source')->item(0)->nodeValue;
                 $translation = $message->getElementsByTagName('translation')->item(0);
                 $locations = $message->getElementsByTagName('location');
-                for ($i = $locations->length; --$i >= 0; ) {
+                for ($i = $locations->length; --$i >= 0;) {
                     $location = $locations->item($i);
                     $location->parentNode->removeChild($location);
                 }
-                if (isset($data[$contextName][$source])){
+                if (isset($data[$contextName][$source])) {
                     $string = $data[$contextName][$source];
                     $translation->removeAttribute('type');
                     $translation->nodeValue = $string;
@@ -145,7 +150,7 @@ class TsParser
 
         return [
             'filepath' => $filename,
-            'dom' => $doc
+            'dom' => $doc,
         ];
     }
 
@@ -163,14 +168,14 @@ class TsParser
      * @param array $data
      * @return DOMDocument
      */
-    public function getDOMDocument($data = array())
+    public function getDOMDocument($data = [])
     {
         $doc = new DOMDocument();
         $string = file_get_contents($this->sourcePath);
-        $string = preg_replace( array('/\s{2,}/', '/[\t\n]/'), ' ', $string );
-        $string = preg_replace("/>s+</", "><", $string );
-        $string = str_replace("> <", "><", $string );
-        $string = str_replace( array( '&amp;nbsp;', "\xC2\xA0" ), ' ', $string ); // from ezxhtmlxmloutput.php
+        $string = preg_replace(['/\s{2,}/', '/[\t\n]/'], ' ', $string);
+        $string = preg_replace("/>s+</", "><", $string);
+        $string = str_replace("> <", "><", $string);
+        $string = str_replace(['&amp;nbsp;', "\xC2\xA0"], ' ', $string); // from ezxhtmlxmloutput.php
         $doc->loadXML($string);
 
         /** @var DOMElement [] $contexts */
@@ -180,15 +185,15 @@ class TsParser
 
             /** @var DOMElement [] $messages */
             $messages = $context->getElementsByTagName('message');
-            foreach ($messages as $message){
+            foreach ($messages as $message) {
                 $source = $message->getElementsByTagName('source')->item(0)->nodeValue;
                 $translation = $message->getElementsByTagName('translation')->item(0);
                 $locations = $message->getElementsByTagName('location');
-                for ($i = $locations->length; --$i >= 0; ) {
+                for ($i = $locations->length; --$i >= 0;) {
                     $location = $locations->item($i);
                     $location->parentNode->removeChild($location);
                 }
-                if (isset($data[$contextName][$source])){
+                if (isset($data[$contextName][$source])) {
                     $string = $data[$contextName][$source];
                     $translation->removeAttribute('type');
                     $translation->nodeValue = $string;
@@ -206,7 +211,7 @@ class TsParser
     {
         return $this->currentLanguage;
     }
-    
+
     public static function storeTsFile($extensionName, $language, $data)
     {
         $filepath = "extension/$extensionName/translations/$language/translation.ts";
@@ -221,14 +226,14 @@ class TsParser
 
         $tsNode = $dom->createElement('TS');
         $tsNode->setAttribute('version', '2.0');
-        foreach ($data as $context => $values){
+        foreach ($data as $context => $values) {
             $contextNode = $dom->createElement('context');
 
             $nameNode = $dom->createElement('name');
             $nameNode->nodeValue = trim($context);
             $contextNode->appendChild($nameNode);
 
-            foreach ($values as $source => $translation){
+            foreach ($values as $source => $translation) {
                 $messageNode = $dom->createElement('message');
 
                 $sourceNode = $dom->createElement('source');
@@ -236,9 +241,9 @@ class TsParser
                 $messageNode->appendChild($sourceNode);
 
                 $translationNode = $dom->createElement('translation');
-                if ($translation == ''){
+                if ($translation == '') {
                     $translationNode->setAttribute('type', 'unfinished');
-                }else{
+                } else {
                     $translationNode->nodeValue = trim($translation);
                 }
                 $messageNode->appendChild($translationNode);
@@ -252,7 +257,7 @@ class TsParser
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = true;
         $dom->save($filepath);
-        
+
         return $filepath;
     }
 
